@@ -2,22 +2,30 @@ package transport
 
 import (
 	"context"
+	"crypto/tls"
 	"net"
 )
 
 type Transport interface {
 	Name() string
-	Dial(ctx context.Context, address string) (net.Conn, error)
+	Dial(context.Context, string) (net.Conn, error)
 }
 
-type Direct struct{}
-
-func (Direct) Name() string {
-	return "direct"
+type TLS struct {
+	Config *tls.Config
 }
 
-func (Direct) Dial(ctx context.Context, address string) (net.Conn, error) {
-	var dialer net.Dialer
+func (t TLS) Name() string {
+	return "tls"
+}
 
-	return dialer.DialContext(ctx, "tcp", address)
+func (t TLS) Dial(ctx context.Context, address string) (net.Conn, error) {
+	dialer := &net.Dialer{}
+
+	return tls.DialWithDialer(
+		dialer,
+		"tcp",
+		address,
+		t.Config,
+	)
 }
