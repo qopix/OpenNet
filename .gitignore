@@ -1,0 +1,15 @@
+/bin/
+/dist/
+/build/
+
+*.exe
+*.elf
+
+.env
+
+.idea/
+.vscode/
+
+.DS_Store
+
+opennet
