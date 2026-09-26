@@ -7,16 +7,32 @@ import (
 	"github.com/qopix/OpenNet/internal/keys"
 )
 
-type Response struct {
-	Key string `json:"key"`
+type Server struct {
+	Address string
 }
 
-func Start() error {
+type KeyResponse struct {
+	PublicKey  string `json:"public_key"`
+	PrivateKey string `json:"private_key"`
+}
+
+func New(address string) *Server {
+	return &Server{
+		Address: address,
+	}
+}
+
+func (s *Server) Start() error {
 	mux := http.NewServeMux()
 
+	mux.HandleFunc("/", indexHandler)
 	mux.HandleFunc("/api/key", keyHandler)
 
-	return http.ListenAndServe("127.0.0.1:8765", mux)
+	return http.ListenAndServe(s.Address, mux)
+}
+
+func indexHandler(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "web/index.html")
 }
 
 func keyHandler(w http.ResponseWriter, r *http.Request) {
@@ -25,12 +41,18 @@ func keyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	key, err := keys.Generate()
+	pair, err := keys.Generate()
 	if err != nil {
-		http.Error(w, "key generation failed", http.StatusInternalServerError)
+		http.Error(w, "failed to generate key", http.StatusInternalServerError)
 		return
 	}
 
+	response := KeyResponse{
+		PublicKey:  pair.PublicKey,
+		PrivateKey: pair.PrivateKey,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(Response{Key: key})
+
+	_ = json.NewEncoder(w).Encode(response)
 }
