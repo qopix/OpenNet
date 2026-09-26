@@ -4,22 +4,41 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/qopix/OpenNet/internal/checker"
 	"github.com/qopix/OpenNet/internal/config"
-	"github.com/qopix/OpenNet/internal/web"
 )
 
 func main() {
+	fmt.Println("OpenNet v0.3")
+	fmt.Println("Network diagnostics")
+	fmt.Println()
+
 	cfg := config.Default()
 
-	fmt.Println("OpenNet v0.1")
-	fmt.Println()
-	fmt.Println("Local control panel:")
-	fmt.Printf("http://%s\n", cfg.PanelAddress)
+	fmt.Println("Checking available endpoints...")
 	fmt.Println()
 
-	server := web.New(cfg.PanelAddress)
+	results := checker.CheckAll(cfg.Endpoints)
 
-	if err := server.Start(); err != nil {
-		log.Fatal(err)
+	for _, result := range results {
+		status := "FAILED"
+
+		if result.OK {
+			status = "OK"
+		}
+
+		fmt.Printf(
+			"%-20s [%s] %s\n",
+			result.Name,
+			status,
+			result.Address,
+		)
+	}
+
+	fmt.Println()
+	fmt.Println("Done.")
+
+	if len(results) == 0 {
+		log.Println("No endpoints configured.")
 	}
 }

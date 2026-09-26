@@ -1,47 +1,33 @@
 package config
 
-import (
-	"encoding/json"
-	"os"
-	"path/filepath"
-)
+type Endpoint struct {
+	Name    string
+	Address string
+}
 
 type Config struct {
-	ListenAddress string `json:"listen_address"`
-	PanelAddress  string `json:"panel_address"`
+	Endpoints []Endpoint
 }
 
 func Default() Config {
 	return Config{
-		ListenAddress: "127.0.0.1:9000",
-		PanelAddress:  "127.0.0.1:8765",
+		Endpoints: []Endpoint{
+			{
+				Name:    "Yandex",
+				Address: "https://ya.ru",
+			},
+			{
+				Name:    "MAX",
+				Address: "https://max.ru",
+			},
+			{
+				Name:    "VK",
+				Address: "https://vk.com",
+			},
+			{
+				Name:    "RuStore",
+				Address: "https://rustore.ru",
+			},
+		},
 	}
-}
-
-func Save(path string, cfg Config) error {
-	data, err := json.MarshalIndent(cfg, "", "    ")
-	if err != nil {
-		return err
-	}
-
-	if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
-		return err
-	}
-
-	return os.WriteFile(path, data, 0600)
-}
-
-func Load(path string) (Config, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return Config{}, err
-	}
-
-	var cfg Config
-
-	if err := json.Unmarshal(data, &cfg); err != nil {
-		return Config{}, err
-	}
-
-	return cfg, nil
 }
