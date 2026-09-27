@@ -6,10 +6,11 @@ import (
 
 	"github.com/qopix/OpenNet/internal/checker"
 	"github.com/qopix/OpenNet/internal/config"
+	"github.com/qopix/OpenNet/internal/web"
 )
 
 func main() {
-	fmt.Println("OpenNet v0.3")
+	fmt.Println("OpenNet v0.4")
 	fmt.Println("Network diagnostics")
 	fmt.Println()
 
@@ -36,9 +37,16 @@ func main() {
 	}
 
 	fmt.Println()
-	fmt.Println("Done.")
+	fmt.Println("Starting local web panel...")
+	fmt.Println("http://127.0.0.1:8765")
+	fmt.Println()
 
-	if len(results) == 0 {
-		log.Println("No endpoints configured.")
+	server := web.New(
+		"127.0.0.1:8765",
+		"data/private.key",
+	)
+
+	if err := server.Start(); err != nil {
+		log.Fatal(err)
 	}
 }
