@@ -11,6 +11,7 @@ type Result struct {
 	Name    string
 	Address string
 	OK      bool
+	Latency time.Duration
 }
 
 func Check(endpoint config.Endpoint) Result {
@@ -18,13 +19,18 @@ func Check(endpoint config.Endpoint) Result {
 		Timeout: 5 * time.Second,
 	}
 
+	start := time.Now()
+
 	resp, err := client.Get(endpoint.Address)
+
+	latency := time.Since(start)
 
 	if err != nil {
 		return Result{
 			Name:    endpoint.Name,
 			Address: endpoint.Address,
 			OK:      false,
+			Latency: latency,
 		}
 	}
 
@@ -34,6 +40,7 @@ func Check(endpoint config.Endpoint) Result {
 		Name:    endpoint.Name,
 		Address: endpoint.Address,
 		OK:      resp.StatusCode >= 200 && resp.StatusCode < 500,
+		Latency: latency,
 	}
 }
 

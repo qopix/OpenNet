@@ -17,6 +17,7 @@ type KeyPair struct {
 
 func Generate() (*KeyPair, error) {
 	publicKey, privateKey, err := ed25519.GenerateKey(rand.Reader)
+
 	if err != nil {
 		return nil, fmt.Errorf("generate key: %w", err)
 	}
@@ -39,6 +40,7 @@ func Save(path string, pair *KeyPair) error {
 
 func Load(path string) (*KeyPair, error) {
 	data, err := os.ReadFile(path)
+
 	if err != nil {
 		return nil, err
 	}
@@ -46,6 +48,7 @@ func Load(path string) (*KeyPair, error) {
 	raw, err := base64.StdEncoding.DecodeString(
 		strings.TrimSpace(string(data)),
 	)
+
 	if err != nil {
 		return nil, err
 	}

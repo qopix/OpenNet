@@ -1,10 +1,8 @@
 opennet
 *.exe
 *.bin
-
 .env
 .idea/
 .vscode/
 .DS_Store
-
 data/

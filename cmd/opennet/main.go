@@ -10,13 +10,13 @@ import (
 )
 
 func main() {
-	fmt.Println("OpenNet v0.4")
-	fmt.Println("Network diagnostics")
+	fmt.Println("OpenNet v0.5")
+	fmt.Println("Network connectivity framework")
 	fmt.Println()
 
 	cfg := config.Default()
 
-	fmt.Println("Checking available endpoints...")
+	fmt.Println("Checking endpoints...")
 	fmt.Println()
 
 	results := checker.CheckAll(cfg.Endpoints)
@@ -29,10 +29,11 @@ func main() {
 		}
 
 		fmt.Printf(
-			"%-20s [%s] %s\n",
+			"%-20s [%s] %s (%dms)\n",
 			result.Name,
 			status,
 			result.Address,
+			result.Latency.Milliseconds(),
 		)
 	}
 
