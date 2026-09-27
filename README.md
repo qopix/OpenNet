@@ -1,6 +1,6 @@
 # 🌐 OpenNet
 
-**OpenNet** — это open-source сетевой проект на языке Go, предназначенный для создания расширяемой сетевой инфраструктуры с автоматическим выбором доступного транспорта и защищённым соединением.
+**OpenNet** — это экспериментальный инструмент на языке Go, разработанный для обхода сетевых ограничений, блокировок цензуры и обеспечения связи в условиях жестких «белых списков» (White-listing) с использованием подключаемых транспортов и без обязательного наличия VPS.
 
 > ⚠️ **Status:** Early development / experimental
 
@@ -8,12 +8,13 @@
 
 ### ✨ Features
 
-* **Language:** Written entirely in Go (1.23+)
-* **Cross-platform:** Native Linux support and Termux-compatible CLI
-* **Control Panel:** Local web-based management panel
-* **Security:** Cryptographic keys based on Ed25519 architecture
-* **Flexibility:** Pluggable transport architecture with local configuration
-* **Independence:** No mandatory VPS or centralized servers required
+* **Anti-Censorship:** Разработан специально для обхода блокировок и работы внутри строгих белых списков.
+* **Language:** Написан полностью на Go (1.23+).
+* **Cross-platform:** Нативная поддержка Linux и совместимый с Termux интерфейс CLI (Android).
+* **Control Panel:** Встроенная локальная веб-панель для удобного управления.
+* **Security:** Сквозное шифрование и авторизация на базе криптографии Ed25519.
+* **Flexibility:** Модульная архитектура подключаемых транспортов (Pluggable Transports) для обфускации трафика.
+* **Independence:** Работа по логике peer-to-peer — наличие постоянного выделенного VPS не обязательно.
 
 ---
 
@@ -44,14 +45,14 @@ OpenNet/
 
 ### 💻 Requirements
 
-* **Go 1.23** or newer
+* **Go 1.23** или новее
 
-#### On Linux:
+#### На Linux:
 ```bash
 go version
 ```
 
-#### On Termux:
+#### На Termux (Android):
 ```bash
 pkg install golang git
 go version
@@ -61,47 +62,47 @@ go version
 
 ### 🚀 Build & Run
 
-#### 1. Clone the repository:
+#### 1. Клонирование репозитория:
 ```bash
 git clone https://github.com/qopix/OpenNet.git
 cd OpenNet
 ```
 
-#### 2. Build the project:
+#### 2. Сборка проекта:
 ```bash
 go build -o opennet ./cmd/opennet
 ```
 
-#### 3. Run the executable:
+#### 3. Запуск исполняемого файла:
 ```bash
 ./opennet
 ```
 
-После запуска локальная панель управления будет доступна по адресу:
+После запуска локальная панель управления будет доступна в браузере по адресу:
 👉 `http://127.0.0.1:8765`
 
 ---
 
 ### 🔒 Security Note
 
-* OpenNet is experimental software.
-* **Do not expose** the local control panel to the public Internet.
-* Private keys should be treated as secrets and should **never** be published in Git repositories.
+* OpenNet является экспериментальным программным обеспечением.
+* **Не открывайте** доступ к локальной панели управления (`127.0.0.1:8765`) во внешнюю сеть интернет.
+* Приватные криптографические ключи являются секретными данными — **никогда** не фиксируйте и не отправляйте их в публичные Git-репозитории.
 
 ---
 
 ### 🛠️ Development Roadmap
 
-Текущий фокус разработки сосредоточен на проектировании и реализации базовой архитектуры:
-1. 🔑 Key management
-2. ⚙️ Local configuration
-3. 🔄 Transport abstraction
-4. 🛡️ Secure connections
-5. 📡 Client/server communication
-6. 🔀 Automatic transport selection
+Текущий фокус разработки сосредоточен на проектировании и реализации базовой архитектуры обхода ограничений:
+1. 🔑 **Key management** — генерация и управление приватными ключами авторизации.
+2. ⚙️ **Local configuration** — гибкая настройка локального узла.
+3. 🔄 **Transport abstraction** — интерфейсы для быстрой интеграции новых протоколов маскировки трафика.
+4. 🛡️ **Secure connections** — шифрование каналов связи в условиях DPI.
+5. 📡 **Client/server communication** — оптимизация передачи пакетов.
+6. 🔀 **Automatic transport selection** — автоматический перебор рабочих протоколов для пробива «белых списков».
 
 ---
 
 ### 📄 License
 
-OpenNet is open-source software licensed under the **GPLv3 License**.
+OpenNet — это программное обеспечение с открытым исходным кодом, распространяемое под лицензией **GPLv3 License**.
