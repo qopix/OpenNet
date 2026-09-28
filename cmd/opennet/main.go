@@ -6,21 +6,23 @@ import (
 
 	"github.com/qopix/OpenNet/internal/checker"
 	"github.com/qopix/OpenNet/internal/key"
+	"github.com/qopix/OpenNet/internal/node"
 )
 
 func usage() {
-	fmt.Println("OpenNet v0.6")
+	fmt.Println("OpenNet v0.7")
 	fmt.Println()
 	fmt.Println("Usage:")
 	fmt.Println("  opennet")
+	fmt.Println("  opennet check")
 	fmt.Println("  opennet key")
 	fmt.Println("  opennet connect <key>")
-	fmt.Println("  opennet check <url>")
+	fmt.Println("  opennet node")
 }
 
 func main() {
 	if len(os.Args) == 1 {
-		fmt.Println("OpenNet v0.6")
+		fmt.Println("OpenNet v0.7")
 		fmt.Println("Open network connectivity framework")
 		fmt.Println()
 		usage()
@@ -28,6 +30,10 @@ func main() {
 	}
 
 	switch os.Args[1] {
+
+	case "check":
+		checker.CheckDefault()
+
 	case "key":
 		if err := key.CreateAndShow(); err != nil {
 			fmt.Fprintln(os.Stderr, "Error:", err)
@@ -40,33 +46,16 @@ func main() {
 			os.Exit(1)
 		}
 
-		if err := checker.Connect(os.Args[2]); err != nil {
+		if err := node.Connect(os.Args[2]); err != nil {
 			fmt.Fprintln(os.Stderr, "Connection failed:", err)
 			os.Exit(1)
 		}
 
-	case "check":
-		if len(os.Args) != 3 {
-			fmt.Println("Usage: opennet check <url>")
+	case "node":
+		if err := node.Start(); err != nil {
+			fmt.Fprintln(os.Stderr, "Node error:", err)
 			os.Exit(1)
 		}
-
-		result := checker.Check(os.Args[2])
-
-		if result.OK {
-			fmt.Printf(
-				"OK %s (%dms)\n",
-				result.URL,
-				result.Latency.Milliseconds(),
-			)
-			return
-		}
-
-		fmt.Printf(
-			"FAILED %s (%dms)\n",
-			result.URL,
-			result.Latency.Milliseconds(),
-		)
 
 	default:
 		usage()

@@ -3,94 +3,80 @@ package checker
 import (
 	"fmt"
 	"net/http"
-	"net/url"
-	"strings"
 	"time"
-
-	"github.com/qopix/OpenNet/internal/key"
 )
 
-type Result struct {
-	URL     string
-	OK      bool
-	Latency time.Duration
+type Endpoint struct {
+	Name string
+	URL  string
 }
 
-func Check(address string) Result {
+var DefaultEndpoints = []Endpoint{
+	{
+		Name: "Yandex",
+		URL:  "https://ya.ru",
+	},
+	{
+		Name: "MAX",
+		URL:  "https://max.ru",
+	},
+	{
+		Name: "VK",
+		URL:  "https://vk.com",
+	},
+	{
+		Name: "RuStore",
+		URL:  "https://rustore.ru",
+	},
+}
+
+func Check(endpoint Endpoint) {
 	client := &http.Client{
 		Timeout: 5 * time.Second,
 	}
 
 	start := time.Now()
 
-	resp, err := client.Get(address)
+	resp, err := client.Get(endpoint.URL)
 
 	latency := time.Since(start)
 
 	if err != nil {
-		return Result{
-			URL:     address,
-			OK:      false,
-			Latency: latency,
-		}
+		fmt.Printf(
+			"%-10s [FAILED] %s (%dms)\n",
+			endpoint.Name,
+			endpoint.URL,
+			latency.Milliseconds(),
+		)
+		return
 	}
 
 	resp.Body.Close()
 
-	return Result{
-		URL:     address,
-		OK:      resp.StatusCode >= 200 && resp.StatusCode < 500,
-		Latency: latency,
-	}
-}
-
-func Connect(value string) error {
-	host, clientID, _, err := key.Parse(value)
-
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("OpenNet connection")
-	fmt.Println()
-	fmt.Println("Node:", host)
-	fmt.Println("Client:", clientID)
-	fmt.Println()
-	fmt.Println("Checking node...")
-
-	address := "https://" + host
-
-	parsed, err := url.Parse(address)
-
-	if err != nil || parsed.Host == "" {
-		return fmt.Errorf("invalid node address")
-	}
-
-	result := Check(address)
-
-	if !result.OK {
-		return fmt.Errorf("node is unreachable")
+	if resp.StatusCode >= 200 && resp.StatusCode < 500 {
+		fmt.Printf(
+			"%-10s [OK]     %s (%dms)\n",
+			endpoint.Name,
+			endpoint.URL,
+			latency.Milliseconds(),
+		)
+		return
 	}
 
 	fmt.Printf(
-		"Node reachable (%dms)\n",
-		result.Latency.Milliseconds(),
+		"%-10s [HTTP %d] %s (%dms)\n",
+		endpoint.Name,
+		resp.StatusCode,
+		endpoint.URL,
+		latency.Milliseconds(),
 	)
-
-	fmt.Println()
-	fmt.Println("OpenNet handshake ready.")
-	fmt.Println("Protocol version: 1")
-
-	return nil
 }
 
-func NormalizeEndpoint(value string) string {
-	value = strings.TrimSpace(value)
+func CheckDefault() {
+	fmt.Println("OpenNet connectivity check")
+	fmt.Println()
 
-	if strings.HasPrefix(value, "http://") ||
-		strings.HasPrefix(value, "https://") {
-		return value
+	for _, endpoint := range DefaultEndpoints {
+		Check(endpoint)
 	}
-
-	return "https://" + value
 }

@@ -10,11 +10,11 @@ import (
 )
 
 const (
-	clientIDBytes = 16
-	secretBytes   = 32
+	clientIDSize = 16
+	secretSize   = 32
 )
 
-func randomBytes(size int) ([]byte, error) {
+func random(size int) ([]byte, error) {
 	data := make([]byte, size)
 
 	if _, err := rand.Read(data); err != nil {
@@ -27,12 +27,7 @@ func randomBytes(size int) ([]byte, error) {
 func Create(endpoint string) (string, error) {
 	endpoint = strings.TrimSpace(endpoint)
 
-	if endpoint == "" {
-		return "", errors.New("endpoint is empty")
-	}
-
 	u, err := url.Parse(endpoint)
-
 	if err != nil {
 		return "", errors.New("invalid endpoint")
 	}
@@ -45,63 +40,72 @@ func Create(endpoint string) (string, error) {
 		return "", errors.New("endpoint host is missing")
 	}
 
-	clientID, err := randomBytes(clientIDBytes)
-
+	id, err := random(clientIDSize)
 	if err != nil {
-		return "", fmt.Errorf("generate client id: %w", err)
+		return "", err
 	}
 
-	secret, err := randomBytes(secretBytes)
-
+	secret, err := random(secretSize)
 	if err != nil {
-		return "", fmt.Errorf("generate secret: %w", err)
+		return "", err
 	}
 
-	id := base64.RawURLEncoding.EncodeToString(clientID)
+	clientID := base64.RawURLEncoding.EncodeToString(id)
 	token := base64.RawURLEncoding.EncodeToString(secret)
 
 	return fmt.Sprintf(
 		"opennet://%s/%s/%s",
-		u.Host,
-		id,
+		u.String(),
+		clientID,
 		token,
 	), nil
 }
 
-func Parse(value string) (string, string, string, error) {
-	value = strings.TrimSpace(value)
+type Parsed struct {
+	Endpoint string
+	ClientID string
+	Secret   []byte
+}
 
+func Parse(value string) (*Parsed, error) {
 	if !strings.HasPrefix(value, "opennet://") {
-		return "", "", "", errors.New("invalid OpenNet key")
+		return nil, errors.New("invalid OpenNet key")
 	}
 
 	raw := strings.TrimPrefix(value, "opennet://")
 
 	parts := strings.Split(raw, "/")
 
-	if len(parts) != 3 {
-		return "", "", "", errors.New("invalid OpenNet key format")
+	if len(parts) < 4 {
+		return nil, errors.New("invalid OpenNet key format")
 	}
 
-	host := parts[0]
-	clientID := parts[1]
-	token := parts[2]
+	scheme := parts[0]
+	host := parts[1]
+	clientID := parts[2]
+	token := parts[3]
 
-	if host == "" || clientID == "" || token == "" {
-		return "", "", "", errors.New("invalid OpenNet key")
+	if scheme != "http:" && scheme != "https:" {
+		return nil, errors.New("invalid endpoint scheme")
 	}
 
-	if _, err := base64.RawURLEncoding.DecodeString(clientID); err != nil {
-		return "", "", "", errors.New("invalid client id")
+	endpoint := scheme + "//" + host
+
+	id, err := base64.RawURLEncoding.DecodeString(clientID)
+	if err != nil || len(id) != clientIDSize {
+		return nil, errors.New("invalid client id")
 	}
 
 	secret, err := base64.RawURLEncoding.DecodeString(token)
-
-	if err != nil || len(secret) != secretBytes {
-		return "", "", "", errors.New("invalid secret")
+	if err != nil || len(secret) != secretSize {
+		return nil, errors.New("invalid secret")
 	}
 
-	return host, clientID, token, nil
+	return &Parsed{
+		Endpoint: endpoint,
+		ClientID: clientID,
+		Secret:   secret,
+	}, nil
 }
 
 func CreateAndShow() error {
@@ -114,7 +118,6 @@ func CreateAndShow() error {
 	}
 
 	value, err := Create(endpoint)
-
 	if err != nil {
 		return err
 	}
@@ -124,7 +127,7 @@ func CreateAndShow() error {
 	fmt.Println()
 	fmt.Println(value)
 	fmt.Println()
-	fmt.Println("Connect with:")
+	fmt.Println("Connect:")
 	fmt.Println("  opennet connect <key>")
 
 	return nil
