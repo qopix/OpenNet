@@ -1,55 +1,96 @@
 package checker
 
 import (
+	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
-	"github.com/qopix/OpenNet/internal/config"
+	"github.com/qopix/OpenNet/internal/key"
 )
 
 type Result struct {
-	Name    string
-	Address string
+	URL     string
 	OK      bool
 	Latency time.Duration
 }
 
-func Check(endpoint config.Endpoint) Result {
+func Check(address string) Result {
 	client := &http.Client{
 		Timeout: 5 * time.Second,
 	}
 
 	start := time.Now()
 
-	resp, err := client.Get(endpoint.Address)
+	resp, err := client.Get(address)
 
 	latency := time.Since(start)
 
 	if err != nil {
 		return Result{
-			Name:    endpoint.Name,
-			Address: endpoint.Address,
+			URL:     address,
 			OK:      false,
 			Latency: latency,
 		}
 	}
 
-	defer resp.Body.Close()
+	resp.Body.Close()
 
 	return Result{
-		Name:    endpoint.Name,
-		Address: endpoint.Address,
+		URL:     address,
 		OK:      resp.StatusCode >= 200 && resp.StatusCode < 500,
 		Latency: latency,
 	}
 }
 
-func CheckAll(endpoints []config.Endpoint) []Result {
-	results := make([]Result, 0, len(endpoints))
+func Connect(value string) error {
+	host, clientID, _, err := key.Parse(value)
 
-	for _, endpoint := range endpoints {
-		results = append(results, Check(endpoint))
+	if err != nil {
+		return err
 	}
 
-	return results
+	fmt.Println("OpenNet connection")
+	fmt.Println()
+	fmt.Println("Node:", host)
+	fmt.Println("Client:", clientID)
+	fmt.Println()
+	fmt.Println("Checking node...")
+
+	address := "https://" + host
+
+	parsed, err := url.Parse(address)
+
+	if err != nil || parsed.Host == "" {
+		return fmt.Errorf("invalid node address")
+	}
+
+	result := Check(address)
+
+	if !result.OK {
+		return fmt.Errorf("node is unreachable")
+	}
+
+	fmt.Printf(
+		"Node reachable (%dms)\n",
+		result.Latency.Milliseconds(),
+	)
+
+	fmt.Println()
+	fmt.Println("OpenNet handshake ready.")
+	fmt.Println("Protocol version: 1")
+
+	return nil
+}
+
+func NormalizeEndpoint(value string) string {
+	value = strings.TrimSpace(value)
+
+	if strings.HasPrefix(value, "http://") ||
+		strings.HasPrefix(value, "https://") {
+		return value
+	}
+
+	return "https://" + value
 }

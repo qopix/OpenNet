@@ -2,52 +2,74 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"os"
 
 	"github.com/qopix/OpenNet/internal/checker"
-	"github.com/qopix/OpenNet/internal/config"
-	"github.com/qopix/OpenNet/internal/web"
+	"github.com/qopix/OpenNet/internal/key"
 )
 
+func usage() {
+	fmt.Println("OpenNet v0.6")
+	fmt.Println()
+	fmt.Println("Usage:")
+	fmt.Println("  opennet")
+	fmt.Println("  opennet key")
+	fmt.Println("  opennet connect <key>")
+	fmt.Println("  opennet check <url>")
+}
+
 func main() {
-	fmt.Println("OpenNet v0.5")
-	fmt.Println("Network connectivity framework")
-	fmt.Println()
+	if len(os.Args) == 1 {
+		fmt.Println("OpenNet v0.6")
+		fmt.Println("Open network connectivity framework")
+		fmt.Println()
+		usage()
+		return
+	}
 
-	cfg := config.Default()
+	switch os.Args[1] {
+	case "key":
+		if err := key.CreateAndShow(); err != nil {
+			fmt.Fprintln(os.Stderr, "Error:", err)
+			os.Exit(1)
+		}
 
-	fmt.Println("Checking endpoints...")
-	fmt.Println()
+	case "connect":
+		if len(os.Args) != 3 {
+			fmt.Println("Usage: opennet connect <key>")
+			os.Exit(1)
+		}
 
-	results := checker.CheckAll(cfg.Endpoints)
+		if err := checker.Connect(os.Args[2]); err != nil {
+			fmt.Fprintln(os.Stderr, "Connection failed:", err)
+			os.Exit(1)
+		}
 
-	for _, result := range results {
-		status := "FAILED"
+	case "check":
+		if len(os.Args) != 3 {
+			fmt.Println("Usage: opennet check <url>")
+			os.Exit(1)
+		}
+
+		result := checker.Check(os.Args[2])
 
 		if result.OK {
-			status = "OK"
+			fmt.Printf(
+				"OK %s (%dms)\n",
+				result.URL,
+				result.Latency.Milliseconds(),
+			)
+			return
 		}
 
 		fmt.Printf(
-			"%-20s [%s] %s (%dms)\n",
-			result.Name,
-			status,
-			result.Address,
+			"FAILED %s (%dms)\n",
+			result.URL,
 			result.Latency.Milliseconds(),
 		)
-	}
 
-	fmt.Println()
-	fmt.Println("Starting local web panel...")
-	fmt.Println("http://127.0.0.1:8765")
-	fmt.Println()
-
-	server := web.New(
-		"127.0.0.1:8765",
-		"data/private.key",
-	)
-
-	if err := server.Start(); err != nil {
-		log.Fatal(err)
+	default:
+		usage()
+		os.Exit(1)
 	}
 }
