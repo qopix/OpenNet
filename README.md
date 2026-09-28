@@ -1,108 +1,278 @@
 # 🌐 OpenNet
 
-**OpenNet** — это экспериментальный инструмент на языке Go, разработанный для обхода сетевых ограничений, блокировок цензуры и обеспечения связи в условиях жестких «белых списков» (White-listing) с использованием подключаемых транспортов и без обязательного наличия VPS.
+## OpenNet — экспериментальный сетевой инструмент на Go для построения защищённого соединения через подключаемый внешний транспорт без необходимости поднимать собственный VPS.
 
-> ⚠️ **Status:** Early development / experimental
-
----
-
-### ✨ Features
-
-* **Anti-Censorship:** Разработан специально для обхода блокировок и работы внутри строгих белых списков.
-* **Language:** Написан полностью на Go (1.23+).
-* **Cross-platform:** Нативная поддержка Linux и совместимый с Termux интерфейс CLI (Android).
-* **Control Panel:** Встроенная локальная веб-панель для удобного управления.
-* **Security:** Сквозное шифрование и авторизация на базе криптографии Ed25519.
-* **Flexibility:** Модульная архитектура подключаемых транспортов (Pluggable Transports) для обфускации трафика.
-* **Independence:** Работа по логике peer-to-peer — наличие постоянного выделенного VPS не обязательно.
+«⚠️ Status: Early development / experimental
+Version: v1.0»
 
 ---
 
-### 📂 Project Structure
+✨ Features
 
-```text
+- 🔌 SOCKS5 — локальный SOCKS5-прокси на "127.0.0.1:1080".
+- 🌐 WebSocket transport — подключение к внешнему Worker через WebSocket.
+- ☁️ Cloudflare Worker transport — внешний транспорт без собственного VPS.
+- 🔐 Token authentication — авторизация Worker через Bearer-токен.
+- 📦 Pluggable architecture — транспорт отделён от локального SOCKS5-сервера.
+- 🐧 Linux — нативная CLI-сборка.
+- 📱 Termux — клиент OpenNet может запускаться на Android через Termux.
+- 🚀 Go — основной код написан на Go.
+- 🛠️ Bootstrap — автоматическая подготовка и сборка проекта.
+
+---
+
+🧠 How it works
+
+OpenNet работает как локальный SOCKS5-прокси:
+
+Application
+     │
+     ▼
+127.0.0.1:1080
+     │
+     ▼
+OpenNet
+     │
+     │ WebSocket
+     ▼
+Cloudflare Worker
+     │
+     │ TCP
+     ▼
+Target server
+
+OpenNet принимает соединение от приложения через SOCKS5, устанавливает WebSocket-соединение с настроенным Worker и передаёт данные через него.
+
+Собственный VPS для Worker-транспорта не требуется.
+
+---
+
+📂 Project Structure
+
 OpenNet/
 ├── cmd/
 │   └── opennet/
 │       └── main.go
+│
 ├── internal/
 │   ├── config/
 │   │   └── config.go
-│   ├── keys/
-│   │   └── keys.go
+│   ├── protocol/
+│   │   └── protocol.go
 │   ├── transport/
 │   │   └── transport.go
-│   └── web/
-│       └── web.go
-├── web/
-│   └── index.html
+│   └── socks5/
+│       └── server.go
+│
+├── data/
+│   ├── config.json
+│   └── cache/
+│
+├── worker/
+│   ├── src/
+│   │   └── index.js
+│   ├── wrangler.jsonc
+│   └── README.md
+│
 ├── go.mod
 ├── .gitignore
 └── README.md
-```
 
 ---
 
-### 💻 Requirements
+💻 Requirements
 
-* **Go 1.23** или новее
+Linux
 
-#### На Linux:
-```bash
+- Go 1.23+
+- Git
+
+Проверить Go:
+
 go version
-```
 
-#### На Termux (Android):
-```bash
+Android / Termux
+
 pkg install golang git
+
+Проверить:
+
 go version
-```
+
+«Деплой Cloudflare Worker рекомендуется выполнять с обычного Linux/macOS/Windows-компьютера. Wrangler может не поддерживать Android/Termux как платформу для установки.»
 
 ---
 
-### 🚀 Build & Run
+🚀 Installation
 
-#### 1. Клонирование репозитория:
-```bash
+Клонировать репозиторий:
+
 git clone https://github.com/qopix/OpenNet.git
 cd OpenNet
-```
 
-#### 2. Сборка проекта:
-```bash
+Собрать:
+
+go mod tidy
 go build -o opennet ./cmd/opennet
-```
 
-#### 3. Запуск исполняемого файла:
-```bash
+---
+
+⚙️ Configuration
+
+Открой:
+
+data/config.json
+
+Пример:
+
+{
+  "worker_url": "wss://YOUR-WORKER.workers.dev",
+  "token": "YOUR_TOKEN",
+  "socks_host": "127.0.0.1",
+  "socks_port": 1080
+}
+
+Параметры
+
+Параметр| Описание
+"worker_url"| WebSocket-адрес Worker
+"token"| Токен авторизации
+"socks_host"| Локальный адрес SOCKS5
+"socks_port"| Локальный порт SOCKS5
+
+---
+
+☁️ Worker
+
+Перейди в каталог Worker:
+
+cd worker
+
+Установи Wrangler:
+
+bun add -g wrangler
+
+Авторизуйся:
+
+wrangler login
+
+Создай секрет:
+
+wrangler secret put OPENNET_TOKEN
+
+Затем выполни:
+
+wrangler deploy
+
+После деплоя Cloudflare выдаст адрес Worker.
+
+В "data/config.json" указывается WebSocket-вариант адреса:
+
+wss://YOUR-WORKER.workers.dev
+
+Токен в OpenNet должен совпадать со значением "OPENNET_TOKEN".
+
+---
+
+▶️ Running
+
+Из корня проекта:
+
 ./opennet
-```
 
-После запуска локальная панель управления будет доступна в браузере по адресу:
-👉 `http://127.0.0.1:8765`
+При успешном запуске:
 
----
+=================================
+ OpenNet v1.0
+=================================
+[OpenNet] Configuration loaded.
+[OpenNet] Starting transport...
+[OpenNet] Starting SOCKS5...
+[OpenNet] Shield: ON
+[OpenNet] SOCKS5: 127.0.0.1:1080
+OpenNet is running.
+Press Ctrl+C to stop.
 
-### 🔒 Security Note
+После запуска приложения могут использовать:
 
-* OpenNet является экспериментальным программным обеспечением.
-* **Не открывайте** доступ к локальной панели управления (`127.0.0.1:8765`) во внешнюю сеть интернет.
-* Приватные криптографические ключи являются секретными данными — **никогда** не фиксируйте и не отправляйте их в публичные Git-репозитории.
+SOCKS5
+127.0.0.1:1080
 
----
+Для остановки:
 
-### 🛠️ Development Roadmap
-
-Текущий фокус разработки сосредоточен на проектировании и реализации базовой архитектуры обхода ограничений:
-1. 🔑 **Key management** — генерация и управление приватными ключами авторизации.
-2. ⚙️ **Local configuration** — гибкая настройка локального узла.
-3. 🔄 **Transport abstraction** — интерфейсы для быстрой интеграции новых протоколов маскировки трафика.
-4. 🛡️ **Secure connections** — шифрование каналов связи в условиях DPI.
-5. 📡 **Client/server communication** — оптимизация передачи пакетов.
-6. 🔀 **Automatic transport selection** — автоматический перебор рабочих протоколов для пробива «белых списков».
+Ctrl+C
 
 ---
 
-### 📄 License
+🔐 Security
 
-OpenNet — это программное обеспечение с открытым исходным кодом, распространяемое под лицензией **GPLv3 License**.
+OpenNet находится на ранней стадии разработки.
+
+Не публикуйте:
+
+- "OPENNET_TOKEN";
+- приватные ключи, если они появятся в будущих версиях;
+- локальные конфигурации с секретами;
+- другие credentials.
+
+Не открывайте локальный SOCKS5-порт во внешнюю сеть без необходимости.
+
+Для Worker используется секрет:
+
+wrangler secret put OPENNET_TOKEN
+
+Секрет не должен храниться непосредственно в исходном коде или Git-репозитории.
+
+---
+
+🛠️ Roadmap
+
+v1.x
+
+- [x] Local SOCKS5
+- [x] WebSocket transport
+- [x] Cloudflare Worker transport
+- [x] Token authentication
+- [x] Basic configuration
+- [x] Linux/Termux CLI
+- [x] Bootstrap
+
+Future
+
+- [ ] Multiple transport backends
+- [ ] Automatic transport selection
+- [ ] Better connection recovery
+- [ ] Connection multiplexing
+- [ ] Persistent configuration
+- [ ] Improved cryptographic protocol
+- [ ] Android system-wide VPN/TUN mode
+- [ ] Local control interface
+- [ ] Transport health checks
+
+---
+
+⚠️ Experimental Software
+
+OpenNet is experimental software.
+
+The current v1.0 implementation is intended for development and testing. It should not be considered a production-grade anonymity, privacy, or censorship-resistance system.
+
+Network behavior can depend on the configured transport, network provider, firewall, DNS configuration, and other external factors.
+
+---
+
+📄 License
+
+OpenNet is free and open-source software distributed under the:
+
+GNU General Public License v3.0 (GPLv3)
+
+---
+
+👤 Project
+
+OpenNet
+
+GitHub:
+
+https://github.com/qopix/OpenNet
