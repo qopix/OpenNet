@@ -1,25 +1,30 @@
-🌐 OpenNet
+# OpenNet
 
-OpenNet — экспериментальный сетевой инструмент на Go с локальным SOCKS5-интерфейсом и подключаемыми транспортами.
+**Experimental networking tool written in Go** with a local SOCKS5 interface and pluggable transports.
 
-«⚠️ Status: Early development / experimental
-Version: v1.0»
+> **Status:** early development / experimental  
+> **Version:** v1.0
 
-✨ Features
+---
 
-- 🚀 Written in Go 1.23+
-- 🔌 Local SOCKS5 proxy
-- 🌐 WebSocket transport
-- ☁️ Cloudflare Worker transport
-- 🔐 Token-based authentication
-- 🧩 Pluggable transport architecture
-- 🐧 Linux support
-- 📱 Termux / Android CLI support
-- ⚙️ JSON configuration
-- 📦 Bootstrap-based setup
+## Features
 
-🏗️ Architecture
+- Written in Go 1.23+
+- Local SOCKS5 proxy
+- WebSocket transport
+- Cloudflare Worker transport
+- Token-based authentication
+- Pluggable transport architecture
+- Linux support
+- Termux / Android CLI support
+- JSON configuration
+- Bootstrap-based setup
 
+---
+
+## Architecture
+
+```text
 Application
      │
      │ SOCKS5
@@ -39,44 +44,44 @@ Application
        │ TCP
        ▼
  Target Server
+```
 
-📂 Project Structure
+---
 
+## Project Structure
+
+```text
 OpenNet/
 ├── cmd/
 │   └── opennet/
 │       └── main.go
-│
 ├── internal/
 │   ├── config/
 │   │   └── config.go
-│   │
 │   ├── protocol/
 │   │   └── protocol.go
-│   │
 │   ├── socks5/
 │   │   └── server.go
-│   │
 │   └── transport/
 │       └── transport.go
-│
 ├── data/
 │   ├── cache/
 │   └── config.json
-│
 ├── worker/
 │   ├── src/
 │   │   └── index.js
 │   ├── wrangler.jsonc
 │   └── README.md
-│
 ├── .gitignore
 ├── go.mod
 └── README.md
+```
 
-💻 Requirements
+---
 
-Linux
+## Requirements
+
+### Linux
 
 - Go 1.23+
 - Git
@@ -84,106 +89,105 @@ Linux
 
 Check Go:
 
+```bash
 go version
+```
 
-Termux
+### Termux
 
+```bash
 pkg update
 pkg install golang git
-
-Check Go:
-
 go version
+```
 
-«Wrangler deployment should be performed from a desktop Linux, Windows, or macOS system. The Wrangler "workerd" dependency does not currently support Android/Termux natively.»
+> Wrangler deployment should be performed from a desktop Linux, Windows, or macOS system.  
+> The Wrangler `workerd` dependency does not currently support Android/Termux natively.
 
-🚀 Installation
+---
+
+## Installation
 
 Clone the repository:
 
+```bash
 git clone https://github.com/qopix/OpenNet.git
 cd OpenNet
+```
 
-Build the project:
+Build:
 
+```bash
 go mod tidy
 go build -o opennet ./cmd/opennet
+```
 
 Run:
 
+```bash
 ./opennet
+```
 
-⚙️ Configuration
+---
 
-Open:
+## Configuration
 
-data/config.json
+Edit `data/config.json`:
 
-Example:
-
+```json
 {
   "worker_url": "wss://YOUR-WORKER.workers.dev",
   "token": "YOUR_TOKEN",
   "socks_host": "127.0.0.1",
   "socks_port": 1080
 }
+```
 
-Configuration options
+| Option        | Description                      |
+|---------------|----------------------------------|
+| `worker_url`  | WebSocket transport endpoint     |
+| `token`       | Worker authentication token      |
+| `socks_host`  | Local SOCKS5 address             |
+| `socks_port`  | Local SOCKS5 port                |
 
-Option| Description
-"worker_url"| WebSocket transport endpoint
-"token"| Worker authentication token
-"socks_host"| Local SOCKS5 address
-"socks_port"| Local SOCKS5 port
+Default SOCKS5 address: `127.0.0.1:1080`
 
-Default SOCKS5 address:
+---
 
-127.0.0.1:1080
-
-☁️ Cloudflare Worker
+## Cloudflare Worker
 
 OpenNet includes a Cloudflare Worker transport.
 
-Go to the Worker directory:
-
+```bash
 cd worker
-
-Install Wrangler with Bun:
-
 bun add -g wrangler
-
-Login:
-
 wrangler login
-
-Set the authentication token:
-
 wrangler secret put OPENNET_TOKEN
-
-Deploy the Worker:
-
 wrangler deploy
+```
 
-After deployment, Cloudflare will provide a Worker URL.
+After deployment, Cloudflare provides a Worker URL.  
+Use the WebSocket form of that URL in `data/config.json`:
 
-Use the WebSocket version of the URL in:
-
-data/config.json
-
-Example:
-
+```text
 wss://YOUR-WORKER.workers.dev
+```
 
-The token in "data/config.json" must match the "OPENNET_TOKEN" secret.
+The token in `data/config.json` **must** match the `OPENNET_TOKEN` secret.
 
-▶️ Running OpenNet
+---
+
+## Running OpenNet
 
 From the project root:
 
+```bash
 ./opennet
+```
 
 Expected output:
 
+```text
 =================================
  OpenNet v1.0
 =================================
@@ -194,37 +198,39 @@ Expected output:
 [OpenNet] SOCKS5: 127.0.0.1:1080
 OpenNet is running.
 Press Ctrl+C to stop.
+```
 
-Stop the program with:
+Stop with `Ctrl+C`.
 
-Ctrl+C
+---
 
-🔐 Security
+## Security
 
 OpenNet is experimental software.
 
-Do not commit sensitive information to the repository.
+**Do not commit** sensitive information to the repository.
 
 Never publish:
 
 - Authentication tokens
 - Private keys
 - Credentials
-- Local configuration containing secrets
+- Local configuration that contains secrets
 
-Worker secrets should be stored using:
+Store Worker secrets with:
 
+```bash
 wrangler secret put OPENNET_TOKEN
+```
 
-The SOCKS5 server is intended to listen on:
+The SOCKS5 server is intended to listen on `127.0.0.1`.  
+Do not expose the SOCKS5 port to external networks unless you understand the security implications.
 
-127.0.0.1
+---
 
-Avoid exposing the SOCKS5 port to external networks unless you understand the security implications.
+## Roadmap
 
-🛣️ Roadmap
-
-OpenNet v1.0
+### OpenNet v1.0
 
 - [x] Go client
 - [x] Local SOCKS5
@@ -235,7 +241,7 @@ OpenNet v1.0
 - [x] Linux support
 - [x] Termux CLI support
 
-Future
+### Future
 
 - [ ] Multiple transport backends
 - [ ] Automatic transport selection
@@ -247,26 +253,30 @@ Future
 - [ ] Local management interface
 - [ ] Additional transport implementations
 
-⚠️ Disclaimer
+---
+
+## Disclaimer
 
 OpenNet is an experimental networking project.
 
-It does not guarantee anonymity, privacy, uninterrupted connectivity, or successful operation on every network.
+It does **not** guarantee anonymity, privacy, uninterrupted connectivity, or successful operation on every network.
 
 Network behavior depends on the configured transport and the surrounding network environment.
 
-📜 License
+---
 
-OpenNet is distributed under the GNU General Public License v3.0.
+## License
 
-See ""LICENSE"" (LICENSE) for the full license text.
+OpenNet is distributed under the [GNU General Public License v3.0](LICENSE).
 
-🤝 Contributing
+---
+
+## Contributing
 
 Issues, bug reports, ideas, and pull requests are welcome.
 
-If you find a bug or want to propose a new transport, open an Issue or Pull Request.
+If you find a bug or want to propose a new transport, open an Issue or a Pull Request.
 
-⭐ OpenNet
+---
 
-GitHub: https://github.com/qopix/OpenNet
+**GitHub:** [https://github.com/qopix/OpenNet](https://github.com/qopix/OpenNet)
