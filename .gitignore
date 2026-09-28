@@ -1,0 +1,5 @@
+opennet
+data/cache/
+data/config.local.json
+*.log
+worker/.wrangler/

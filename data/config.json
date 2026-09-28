@@ -1,0 +1,6 @@
+{
+  "worker_url": "wss://YOUR-WORKER.workers.dev",
+  "token": "CHANGE-ME",
+  "socks_host": "127.0.0.1",
+  "socks_port": 1080
+}

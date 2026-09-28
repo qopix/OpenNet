@@ -3,62 +3,66 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
-	"github.com/qopix/OpenNet/internal/checker"
-	"github.com/qopix/OpenNet/internal/key"
-	"github.com/qopix/OpenNet/internal/node"
+	"github.com/qopix/OpenNet/internal/config"
+	"github.com/qopix/OpenNet/internal/socks5"
 )
 
-func usage() {
-	fmt.Println("OpenNet v0.7")
-	fmt.Println()
-	fmt.Println("Usage:")
-	fmt.Println("  opennet")
-	fmt.Println("  opennet check")
-	fmt.Println("  opennet key")
-	fmt.Println("  opennet connect <key>")
-	fmt.Println("  opennet node")
-}
+const configPath = "data/config.json"
 
 func main() {
-	if len(os.Args) == 1 {
-		fmt.Println("OpenNet v0.7")
-		fmt.Println("Open network connectivity framework")
-		fmt.Println()
-		usage()
-		return
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "version":
+			fmt.Println("OpenNet v1.0")
+			return
+
+		case "status":
+			fmt.Println("OpenNet v1.0")
+			fmt.Println("SOCKS5: 127.0.0.1:1080")
+			return
+
+		case "stop":
+			fmt.Println("OpenNet v1.0 runs in foreground.")
+			fmt.Println("Stop it with Ctrl+C.")
+			return
+		}
 	}
 
-	switch os.Args[1] {
+	fmt.Println("=================================")
+	fmt.Println(" OpenNet v1.0")
+	fmt.Println("=================================")
 
-	case "check":
-		checker.CheckDefault()
-
-	case "key":
-		if err := key.CreateAndShow(); err != nil {
-			fmt.Fprintln(os.Stderr, "Error:", err)
-			os.Exit(1)
-		}
-
-	case "connect":
-		if len(os.Args) != 3 {
-			fmt.Println("Usage: opennet connect <key>")
-			os.Exit(1)
-		}
-
-		if err := node.Connect(os.Args[2]); err != nil {
-			fmt.Fprintln(os.Stderr, "Connection failed:", err)
-			os.Exit(1)
-		}
-
-	case "node":
-		if err := node.Start(); err != nil {
-			fmt.Fprintln(os.Stderr, "Node error:", err)
-			os.Exit(1)
-		}
-
-	default:
-		usage()
+	cfg, err := config.Load(configPath)
+	if err != nil {
+		fmt.Printf("[ERROR] %v\n", err)
 		os.Exit(1)
 	}
+
+	fmt.Println("[OpenNet] Configuration loaded.")
+	fmt.Println("[OpenNet] Starting transport...")
+	fmt.Println("[OpenNet] Starting SOCKS5...")
+
+	server := socks5.New(cfg)
+
+	go func() {
+		if err := server.ListenAndServe(); err != nil {
+			fmt.Printf("[OpenNet] SOCKS5 error: %v\n", err)
+			os.Exit(1)
+		}
+	}()
+
+	fmt.Println("[OpenNet] Shield: ON")
+	fmt.Println("[OpenNet] SOCKS5: 127.0.0.1:1080")
+	fmt.Println("OpenNet is running.")
+	fmt.Println("Press Ctrl+C to stop.")
+
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
+
+	<-sig
+
+	fmt.Println("\n[OpenNet] Stopped.")
 }
